@@ -1,6 +1,18 @@
+<p align="center"><img src="electron/resources/icon.png" width="96" alt="PDF Local"></p>
+
 # PDF Local
 
+[![CI](https://github.com/julioda18/pdf_local/actions/workflows/ci.yml/badge.svg)](https://github.com/julioda18/pdf_local/actions/workflows/ci.yml)
+[![Release](https://github.com/julioda18/pdf_local/actions/workflows/release.yml/badge.svg)](https://github.com/julioda18/pdf_local/actions/workflows/release.yml)
+[![Última versión](https://img.shields.io/github/v/release/julioda18/pdf_local)](https://github.com/julioda18/pdf_local/releases/latest)
+
 Herramientas PDF al estilo iLovePDF que se ejecutan **solo en tu equipo**. Ningún archivo sale a internet: el servidor escucha únicamente en `127.0.0.1`, la interfaz no carga recursos externos y cada archivo se borra al terminar la petición.
+
+## Descargar
+
+**Windows:** descarga `PDF-Local-<versión>-portable.exe` desde [Releases](https://github.com/julioda18/pdf_local/releases/latest) y ábrelo. No necesita instalación ni Python: incluye Tesseract, Ghostscript y LibreOffice. También hay un `.zip` con la carpeta descomprimida, que arranca más rápido.
+
+> Windows SmartScreen puede avisar porque el ejecutable no está firmado: *Más información → Ejecutar de todas formas*.
 
 ---
 
@@ -10,12 +22,13 @@ Herramientas PDF al estilo iLovePDF que se ejecutan **solo en tu equipo**. Ning�
 2. [Requisitos](#requisitos)
 3. [Instalación](#instalación)
 4. [Uso](#uso)
-5. [Privacidad y seguridad](#privacidad-y-seguridad)
-6. [Arquitectura](#arquitectura)
-7. [API](#api)
-8. [Añadir una herramienta](#añadir-una-herramienta)
-9. [Pruebas](#pruebas)
-10. [Solución de problemas](#solución-de-problemas)
+5. [App de escritorio](#app-de-escritorio)
+6. [Privacidad y seguridad](#privacidad-y-seguridad)
+7. [Arquitectura](#arquitectura)
+8. [API](#api)
+9. [Añadir una herramienta](#añadir-una-herramienta)
+10. [Pruebas](#pruebas)
+11. [Solución de problemas](#solución-de-problemas)
 
 ---
 
@@ -30,6 +43,9 @@ Herramientas PDF al estilo iLovePDF que se ejecutan **solo en tu equipo**. Ning�
 | Comprimir PDF | Reduce imágenes, fuentes y objetos sobrantes | Nivel baja/media/alta | `.pdf` |
 | PDF a imagen | Una imagen por página | JPG/PNG, 72/150/300 DPI | `.zip` |
 | Imagen a PDF | Una página por imagen | — | `.pdf` |
+| PDF a Word | Reconstruye texto, tablas e imágenes editables | — | `.docx` |
+| PDF a Excel | Una hoja por tabla detectada (o por página con su texto) | — | `.xlsx` |
+| PDF a PowerPoint | Una diapositiva por página; el texto va en las notas | — | `.pptx` |
 | Proteger PDF | Cifrado AES-256 | Contraseña | `.pdf` |
 | Desbloquear PDF | Quita la contraseña | Contraseña actual | `.pdf` |
 | Marca de agua | Texto diagonal semitransparente | Texto, opacidad 0–1 | `.pdf` |
@@ -96,6 +112,54 @@ Para detener el servidor, pulsa `Ctrl+C` o cierra la consola.
 
 ---
 
+## App de escritorio
+
+La app de escritorio es la misma interfaz dentro de una ventana de Electron. Electron arranca el servidor Flask, congelado con PyInstaller, en un puerto libre de `127.0.0.1` y lo cierra al salir.
+
+```
+PDF Local.exe (Electron, electron/main.js)
+ ├─ resources/backend/pdf_local_server.exe   app.py congelado (backend.spec)
+ └─ resources/vendor/                         Tesseract, Ghostscript, LibreOffice podados
+```
+
+| Variable | La define | Uso |
+|---|---|---|
+| `PDF_LOCAL_PORT` | `main.js` | Puerto del servidor (por defecto `5000`) |
+| `PDF_LOCAL_VENDOR` | `main.js` | Carpeta `vendor/` incluida en la app (por defecto la del proyecto) |
+
+### Compilar desde el código
+
+Requisitos: Windows, Python 3.12 y Node 20.
+
+```powershell
+python scripts/install_vendor.py          # vendor/ + .venv
+.venv\Scripts\activate
+pip install pyinstaller
+cd electron
+npm ci
+npm start                                 # desarrollo: usa .venv y app.py
+npm run dist                              # genera electron/dist/
+```
+
+`npm run dist` ejecuta tres pasos:
+
+1. `build:py`: PyInstaller congela `app.py` en `electron/build/backend/`.
+2. `build:vendor`: [prune-vendor.ps1](electron/prune-vendor.ps1) copia `vendor/` a `electron/build/vendor/` sin documentación, galerías, plantillas, diccionarios ni `.jar`.
+3. `electron-builder` crea `PDF-Local-<versión>-portable.exe` y `PDF-Local-<versión>-x64.zip`. El hook [after-pack.js](electron/after-pack.js) incrusta el icono y la versión con rcedit.
+
+El icono se regenera con `python scripts/make_icon.py` y se guarda en `electron/resources/`.
+
+### Publicar una versión
+
+```bash
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+[release.yml](.github/workflows/release.yml) instala `vendor/`, ejecuta los tests, compila con la versión del tag y adjunta el `.exe` y el `.zip` al Release. [ci.yml](.github/workflows/ci.yml) ejecuta los tests en cada push y PR a `main`.
+
+---
+
 ## Privacidad y seguridad
 
 - **Sin red**: el servidor solo acepta conexiones de este equipo (`127.0.0.1`). La interfaz no usa CDN, fuentes ni analíticas externas.
@@ -127,12 +191,19 @@ pdf_local/
 │   ├── images.py        pdf_to_images, images_to_pdf
 │   ├── security.py      protect, unlock
 │   ├── stamps.py        watermark, page_numbers
+│   ├── export.py        pdf_to_word, pdf_to_excel, pdf_to_ppt
+│   ├── preview.py       Miniaturas para la vista de páginas (caché LRU de 4 PDF)
 │   └── external.py      ocr, office_to_pdf
 ├── static/              index.html + app.js (sin dependencias externas)
 ├── tests/               pytest
 ├── scripts/
-│   └── install_vendor.py  Instalador multiplataforma de programas externos
+│   ├── install_vendor.py  Instalador multiplataforma de programas externos
+│   └── make_icon.py       Genera el icono de la app
+├── electron/            App de escritorio: main.js, package.json, prune-vendor.ps1, after-pack.js, resources/
+├── backend.spec         PyInstaller: congela el servidor para Electron
+├── .github/workflows/   ci.yml (tests) y release.yml (compila y publica)
 ├── vendor/              Tesseract, Ghostscript, LibreOffice en Windows (ignorado por git)
+├── doc_errores.md       Registro de errores resueltos (causa y solución)
 ├── install_vendor.bat / install_vendor.sh
 ├── run.bat / run.sh
 └── requirements.txt
@@ -153,6 +224,7 @@ navegador ─POST /api/<tool>─▶ app.process
 
 - *Errores*: solo `ToolError` se muestra al usuario. Un error inesperado llega como 500 y deja la traza en la consola para depurarlo.
 - *Librerías*: PyMuPDF hace casi todo; pikepdf (qpdf) se encarga del cifrado; ocrmypdf orquesta Tesseract y Ghostscript.
+- *Memoria*: MuPDF guarda en una caché global, sin límite, los recursos ya decodificados. `core.pdf_io.release_cache` la vacía después de cada herramienta y cuando se descarta una vista previa. Con esto el servidor se mantiene estable en ~300 MB (prueba de carga: 13 herramientas × 5 rondas con un PDF de 150 páginas).
 - *Binarios*: cada programa tiene un nombre lógico (`tesseract`, `ghostscript`, `libreoffice`). `core.binaries.find_binary` lo busca en `vendor/`, luego en el PATH (`gswin64c` o `gs`, `soffice` o `libreoffice`) y después en rutas de aplicación conocidas. Guarda el resultado en caché, así que hay que reiniciar el servidor tras instalar un programa.
 
 ---
@@ -163,6 +235,8 @@ navegador ─POST /api/<tool>─▶ app.process
 |---|---|---|
 | `GET` | `/api/tools` | `{"merge": true, "ocr": false, ...}`: disponibilidad de cada herramienta |
 | `POST` | `/api/<tool>` | `multipart/form-data` con uno o más `files` y las opciones como campos |
+| `POST` | `/api/preview` | Registra un PDF y devuelve `{"id": token, "ratios": [...]}` |
+| `GET` | `/api/preview/<id>/<n>` | Miniatura JPG/PNG de la página `n` (empieza en 1) |
 
 Respuestas de `POST`: `200` con el archivo como descarga, `400` y `{"error": "..."}` si la entrada no es válida, `404` si la herramienta no existe, `413` si se supera el límite de tamaño.
 
@@ -218,24 +292,8 @@ Cubren cada herramienta (incluidos los casos de error), el análisis de rangos y
 | OCR no reconoce texto en español | Faltan los datos de español | Vuelve a ejecutar el instalador (Windows) o instala `tesseract-lang` / `tesseract-ocr-spa` |
 | `Permission denied` al ejecutar `.sh` | Falta permiso de ejecución | `chmod +x run.sh install_vendor.sh` |
 | "Los archivos superan 500 MB" | Límite de subida | Sube menos archivos a la vez o cambia `MAX_UPLOAD_MB` en `app.py` |
-| El puerto 5000 está ocupado | Otro programa lo usa | Cambia `PORT` en `app.py` |
+| El puerto 5000 está ocupado | Otro programa lo usa | Arranca con la variable `PDF_LOCAL_PORT` (la app de escritorio ya elige un puerto libre) |
+| La app portable tarda en abrir | El `.exe` portable se descomprime en una carpeta temporal en cada arranque | Usa el `.zip` y abre `PDF Local.exe` |
+| `npm run dist` falla con "Cannot create symbolic link" | Windows no permite crear symlinks sin privilegios | Ya está resuelto con `signAndEditExecutable: false`; ver `doc_errores.md` |
 
-## App de escritorio
-
-### Descargar
-Versión lista para usar (Windows, portable, sin instalar nada): [Releases](https://github.com/julioda18/pdf_local/releases).
-
-### Compilar desde el código
-Requisitos: Python 3.12, Node 20.
-
-```powershell
-python scripts/install_vendor.py
-pip install -r requirements.txt pyinstaller
-cd electron
-npm ci
-npm start          # desarrollo
-npm run dist       # genera electron/dist/PDF-Local-<versión>-portable.exe y .zip
-```
-
-### Publicar una versión
-`git tag v1.0.0; git push origin v1.0.0` → GitHub Actions compila y adjunta el `.exe` al Release.
+Más errores resueltos, con su causa y solución, en [doc_errores.md](doc_errores.md).
