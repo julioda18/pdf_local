@@ -333,7 +333,10 @@ function addFiles(fileList) {
 
 /** Nombre de archivo enviado por el servidor en Content-Disposition. */
 function downloadName(response) {
-  const match = (response.headers.get("Content-Disposition") || "").match(/filename="?([^";]+)/);
+  const header = response.headers.get("Content-Disposition") || "";
+  const star = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (star) return decodeURIComponent(star[1]);
+  const match = header.match(/filename="?([^";]+)/);
   return match ? match[1] : "resultado";
 }
 

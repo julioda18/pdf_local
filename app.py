@@ -90,7 +90,7 @@ def process(name):
             payload = BytesIO(result.read_bytes())
         finally:
             release_cache()
-    return send_file(payload, as_attachment=True, download_name=f"{name}{result.suffix}")
+    return send_file(payload, as_attachment=True, download_name=f"{Path(request.files.getlist('files')[0].filename).stem or name}{result.suffix}")
 
 
 @app.errorhandler(ToolError)
