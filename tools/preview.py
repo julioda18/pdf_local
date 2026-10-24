@@ -11,7 +11,7 @@ from collections import OrderedDict
 import pymupdf
 
 from core.errors import ToolError
-from core.pdf_io import open_pdf
+from core.pdf_io import open_pdf, release_cache
 
 THUMB_WIDTH = 140
 JPEG_QUALITY = 70
@@ -42,8 +42,10 @@ class PreviewStore:
         token = secrets.token_urlsafe(16)
         with self._lock:
             self._docs[token] = doc
-            while len(self._docs) > self._max:
-                self._docs.popitem(last=False)[1].close()
+            if len(self._docs) > self._max:
+                while len(self._docs) > self._max:
+                    self._docs.popitem(last=False)[1].close()
+                release_cache()
         return token, ratios
 
     def thumbnail(self, token, number, width=THUMB_WIDTH):

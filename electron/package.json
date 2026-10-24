@@ -1,0 +1,51 @@
+{
+  "name": "pdf-local",
+  "productName": "PDF Local",
+  "version": "1.0.0",
+  "description": "Herramientas PDF 100% locales",
+  "author": "Julio Cedeno",
+  "license": "UNLICENSED",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:py": "cd .. && pyinstaller backend.spec --distpath electron/build --workpath electron/build/tmp --noconfirm",
+    "build:vendor": "powershell -NoProfile -ExecutionPolicy Bypass -File prune-vendor.ps1",
+    "dist": "npm run build:py && npm run build:vendor && electron-builder --win portable zip"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8",
+    "rcedit": "4.0.1"
+  },
+  "build": {
+    "appId": "com.julioda18.pdflocal",
+    "directories": {
+      "buildResources": "resources"
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "resources/icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "build/backend",
+        "to": "backend"
+      },
+      {
+        "from": "build/vendor",
+        "to": "vendor"
+      }
+    ],
+    "asar": true,
+    "afterPack": "./after-pack.js",
+    "win": {
+      "icon": "resources/icon.ico",
+      "signAndEditExecutable": false,
+      "artifactName": "PDF-Local-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "PDF-Local-${version}-portable.exe"
+    }
+  }
+}

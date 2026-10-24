@@ -4,6 +4,9 @@ Sirve la interfaz (``static/``) y expone cada herramienta en ``POST /api/<nombre
 Escucha solo en 127.0.0.1: ningún otro equipo de la red puede conectarse.
 """
 
+import multiprocessing
+import os
+import sys
 import tempfile
 from io import BytesIO
 from pathlib import Path
@@ -12,18 +15,22 @@ from flask import Flask, abort, jsonify, request, send_file
 from werkzeug.exceptions import RequestEntityTooLarge
 
 from core.errors import ToolError
+from core.pdf_io import release_cache
 from core.uploads import save_uploads
 from tools import TOOLS
 from tools.preview import PreviewStore
 
 HOST = "127.0.0.1"
-PORT = 5000
+PORT = int(os.environ.get("PDF_LOCAL_PORT", 5000))
 MAX_UPLOAD_MB = 500
 BAD_REQUEST = 400
 PAYLOAD_TOO_LARGE = 413
 PREVIEW_CACHE_SECONDS = 3600
 
-app = Flask(__name__, static_folder="static", static_url_path="")
+# Congelado con PyInstaller, static/ vive en la carpeta de extracción (_MEIPASS).
+BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+
+app = Flask(__name__, static_folder=str(BASE_DIR / "static"), static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
 previews = PreviewStore()
 
@@ -77,9 +84,12 @@ def process(name):
     with tempfile.TemporaryDirectory() as folder:
         workdir = Path(folder)
         inputs = save_uploads(request.files.getlist("files"), tool.accepts, workdir)
-        result = Path(tool.run(inputs, workdir / "resultado.pdf", **request.form.to_dict()))
-        # Se copia a memoria para poder borrar la carpeta temporal antes de responder.
-        payload = BytesIO(result.read_bytes())
+        try:
+            result = Path(tool.run(inputs, workdir / "resultado.pdf", **request.form.to_dict()))
+            # Se copia a memoria para poder borrar la carpeta temporal antes de responder.
+            payload = BytesIO(result.read_bytes())
+        finally:
+            release_cache()
     return send_file(payload, as_attachment=True, download_name=f"{name}{result.suffix}")
 
 
@@ -95,5 +105,14 @@ def too_large(_error):
     return jsonify(error=f"Los archivos superan {MAX_UPLOAD_MB} MB"), PAYLOAD_TOO_LARGE
 
 
+def _run_frozen_module():
+    """Congelado, ``sys.executable`` es este exe: emula ``python -m ocrmypdf`` (tools/external.py)."""
+    if getattr(sys, "frozen", False) and sys.argv[1:3] == ["-m", "ocrmypdf"]:
+        from ocrmypdf.__main__ import run
+        sys.exit(run(sys.argv[3:]))
+
+
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    _run_frozen_module()
     app.run(host=HOST, port=PORT)

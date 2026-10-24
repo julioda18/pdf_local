@@ -29,6 +29,15 @@ def open_pdf(path, data=None):
     return doc
 
 
+def release_cache():
+    """Vacía la caché global de recursos de MuPDF (fuentes, imágenes decodificadas).
+
+    No tiene límite por defecto y sobrevive al cierre de los documentos: sin esto
+    el servidor crece ~35 MB por operación en PDF con imágenes y nunca los devuelve.
+    """
+    pymupdf.TOOLS.store_shrink(100)
+
+
 def save_pdf(doc, out):
     """Guarda ``doc`` en ``out`` con las opciones estándar y devuelve la ruta."""
     doc.save(out, **SAVE_OPTIONS)

@@ -219,3 +219,23 @@ Cubren cada herramienta (incluidos los casos de error), el análisis de rangos y
 | `Permission denied` al ejecutar `.sh` | Falta permiso de ejecución | `chmod +x run.sh install_vendor.sh` |
 | "Los archivos superan 500 MB" | Límite de subida | Sube menos archivos a la vez o cambia `MAX_UPLOAD_MB` en `app.py` |
 | El puerto 5000 está ocupado | Otro programa lo usa | Cambia `PORT` en `app.py` |
+
+## App de escritorio
+
+### Descargar
+Versión lista para usar (Windows, portable, sin instalar nada): [Releases](https://github.com/julioda18/pdf_local/releases).
+
+### Compilar desde el código
+Requisitos: Python 3.12, Node 20.
+
+```powershell
+python scripts/install_vendor.py
+pip install -r requirements.txt pyinstaller
+cd electron
+npm ci
+npm start          # desarrollo
+npm run dist       # genera electron/dist/PDF-Local-<versión>-portable.exe y .zip
+```
+
+### Publicar una versión
+`git tag v1.0.0; git push origin v1.0.0` → GitHub Actions compila y adjunta el `.exe` al Release.

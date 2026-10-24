@@ -13,7 +13,8 @@ from pathlib import Path
 
 from .errors import ToolError
 
-VENDOR_DIR = Path(__file__).resolve().parents[1] / "vendor"
+# PDF_LOCAL_VENDOR lo define la app de escritorio: vendor/ viaja junto al ejecutable.
+VENDOR_DIR = Path(os.environ.get("PDF_LOCAL_VENDOR") or Path(__file__).resolve().parents[1] / "vendor")
 
 # Patrones glob relativos a vendor/. Hoy solo el instalador de Windows usa vendor/;
 # en macOS/Linux los programas vienen del gestor de paquetes y se encuentran por PATH.
