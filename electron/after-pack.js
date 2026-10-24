@@ -3,7 +3,8 @@
 const path = require("path");
 const rcedit = require("rcedit");
 
-exports.default = async function afterPack({ appOutDir, packager }) {
+exports.default = async function afterPack({ appOutDir, packager, electronPlatformName }) {
+  if (electronPlatformName !== "win32") return;
   const { productFilename, productName, buildVersion } = packager.appInfo;
   await rcedit(path.join(appOutDir, `${productFilename}.exe`), {
     icon: path.join(__dirname, "resources", "icon.ico"),

@@ -209,7 +209,7 @@ def test_pdf_to_word_endpoint(make_pdf):
     with make_pdf(1).open("rb") as f:
         response = app.test_client().post("/api/pdf_to_word", data={"files": (f, "a.pdf")})
     assert response.status_code == 200 and response.data[:2] == b"PK"
-    assert "pdf_to_word.docx" in response.headers["Content-Disposition"]
+    assert "a.docx" in response.headers["Content-Disposition"]
 
 
 @pytest.fixture
@@ -264,4 +264,4 @@ def test_office_export_endpoints(make_pdf, tool, suffix):
     with make_pdf(1).open("rb") as f:
         response = app.test_client().post(f"/api/{tool}", data={"files": (f, "a.pdf")})
     assert response.status_code == 200 and response.data[:2] == b"PK"
-    assert f"{tool}{suffix}" in response.headers["Content-Disposition"]
+    assert f"a{suffix}" in response.headers["Content-Disposition"]

@@ -1,7 +1,7 @@
 {
   "name": "pdf-local",
   "productName": "PDF Local",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Herramientas PDF 100% locales",
   "author": "Julio Cedeno",
   "license": "UNLICENSED",
@@ -10,7 +10,9 @@
     "start": "electron .",
     "build:py": "cd .. && pyinstaller backend.spec --distpath electron/build --workpath electron/build/tmp --noconfirm",
     "build:vendor": "powershell -NoProfile -ExecutionPolicy Bypass -File prune-vendor.ps1",
-    "dist": "npm run build:py && npm run build:vendor && electron-builder --win portable zip"
+    "dist": "npm run build:py && npm run build:vendor && electron-builder --win portable zip",
+    "dist:mac": "npm run build:py && electron-builder --mac dmg zip",
+    "dist:linux": "npm run build:py && electron-builder --linux AppImage tar.gz"
   },
   "devDependencies": {
     "electron": "^45.0.0",
@@ -31,15 +33,27 @@
       {
         "from": "build/backend",
         "to": "backend"
-      },
-      {
-        "from": "build/vendor",
-        "to": "vendor"
       }
     ],
     "asar": true,
     "afterPack": "./after-pack.js",
+    "artifactName": "PDF-Local-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "icon": "resources/icon.png",
+      "category": "public.app-category.productivity",
+      "identity": null
+    },
+    "linux": {
+      "icon": "resources/icon.png",
+      "category": "Office"
+    },
     "win": {
+      "extraResources": [
+        {
+          "from": "build/vendor",
+          "to": "vendor"
+        }
+      ],
       "icon": "resources/icon.ico",
       "signAndEditExecutable": false,
       "artifactName": "PDF-Local-${version}-${arch}.${ext}"

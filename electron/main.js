@@ -23,18 +23,23 @@ function freePort() {
   });
 }
 
-// Empaquetado: exe congelado + vendor/ en resources. En desarrollo: Python del proyecto.
+const IS_WINDOWS = process.platform === "win32";
+
+// Empaquetado: ejecutable congelado + vendor/ en resources (vendor/ solo existe en Windows;
+// en macOS/Linux los programas externos vienen del sistema). En desarrollo: Python del proyecto.
 function serverCommand() {
   if (app.isPackaged) {
     return {
-      command: path.join(process.resourcesPath, "backend", "pdf_local_server.exe"),
+      command: path.join(process.resourcesPath, "backend", IS_WINDOWS ? "pdf_local_server.exe" : "pdf_local_server"),
       args: [],
       vendor: path.join(process.resourcesPath, "vendor"),
     };
   }
-  const venvPython = path.join(PROJECT_DIR, ".venv", "Scripts", "python.exe");
+  const venvPython = IS_WINDOWS
+    ? path.join(PROJECT_DIR, ".venv", "Scripts", "python.exe")
+    : path.join(PROJECT_DIR, ".venv", "bin", "python");
   return {
-    command: fs.existsSync(venvPython) ? venvPython : "python",
+    command: fs.existsSync(venvPython) ? venvPython : IS_WINDOWS ? "python" : "python3",
     args: [path.join(PROJECT_DIR, "app.py")],
     vendor: path.join(PROJECT_DIR, "vendor"),
   };

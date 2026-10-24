@@ -31,8 +31,12 @@ COMMAND_NAMES = {
     "libreoffice": ["soffice", "libreoffice"],
 }
 
-# En macOS el cask de LibreOffice no añade soffice al PATH.
+# En macOS el cask de LibreOffice no añade soffice al PATH, y una app abierta desde
+# el Finder no hereda el PATH del shell, así que tampoco ve las fórmulas de Homebrew.
+HOMEBREW_BINS = ["/opt/homebrew/bin", "/usr/local/bin"]
 APP_PATHS = {
+    "tesseract": [f"{d}/tesseract" for d in HOMEBREW_BINS],
+    "ghostscript": [f"{d}/gs" for d in HOMEBREW_BINS],
     "libreoffice": ["/Applications/LibreOffice.app/Contents/MacOS/soffice"],
 }
 
