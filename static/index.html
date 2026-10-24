@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF Local</title>
+<style>
+:root{--bg:#f5f5f7;--card:#fff;--fg:#1d1d1f;--mut:#6e6e73;--acc:#e5322d;--bd:#ddd}
+@media (prefers-color-scheme:dark){:root{--bg:#161618;--card:#222226;--fg:#eee;--mut:#999;--bd:#333}}
+*{box-sizing:border-box}body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+header{padding:20px 16px;text-align:center}h1{margin:0;font-size:26px}header p{color:var(--mut);margin:6px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;max-width:1000px;margin:0 auto;padding:0 16px 24px}
+.tool{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;cursor:pointer}
+.tool:hover{border-color:var(--acc)}.tool b{display:block;margin-bottom:4px}.tool small{color:var(--mut)}
+.tool.off{opacity:.4;cursor:not-allowed}
+#panel{display:none;max-width:640px;margin:0 auto 40px;padding:0 16px}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:20px}
+#drop{border:2px dashed var(--bd);border-radius:10px;padding:30px;text-align:center;color:var(--mut);cursor:pointer;margin:12px 0}
+#drop.over{border-color:var(--acc)}
+ul{padding-left:18px}label{display:block;margin:10px 0 4px}
+input,select{width:100%;padding:8px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--fg)}
+button{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:12px 20px;font-size:15px;cursor:pointer;margin-top:14px}
+button.sec{background:transparent;color:var(--mut);padding:6px 0}#msg{margin-top:10px}
+.pages{display:flex;flex-wrap:wrap;gap:10px;padding:0;margin:12px 0;list-style:none}
+.thumb{position:relative;width:110px;background:var(--bg);border:2px solid var(--bd);border-radius:8px;padding:6px;text-align:center;cursor:grab;user-select:none}
+.thumb img{display:block;width:100%;min-height:60px;background:#fff;border-radius:3px;transition:transform .2s;pointer-events:none}
+.thumb span{display:block;font-size:12px;color:var(--mut);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thumb.sel{border-color:var(--acc)}.thumb.del{opacity:.3}.thumb.dragging{opacity:.4}
+.thumb .x{position:absolute;top:-8px;right:-8px;width:22px;height:22px;line-height:22px;border-radius:50%;background:var(--acc);color:#fff;font-size:12px;cursor:pointer}
+.thumb.target{border-color:var(--acc);border-style:dashed}
+.thumb[data-part="1"]{background:rgba(229,50,45,.1)}
+.gap{position:relative;z-index:1;width:18px;align-self:stretch;margin:0 -9px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.gap::before{content:"";position:absolute;top:0;bottom:0;width:0;border-left:2px dashed var(--bd)}
+.gap:hover::before{border-left-color:var(--mut)}.gap.cut::before{border-left:3px solid var(--acc)}
+.gap i{position:relative;font-style:normal;font-size:13px;opacity:0;background:var(--card);border-radius:50%}
+.gap:hover i,.gap.cut i{opacity:1}.gap.cut i{color:var(--acc)}
+#hint{color:var(--mut);font-size:13px;margin:8px 0}#actions{display:flex;flex-wrap:wrap;gap:6px}
+button.chip{margin:0;padding:6px 12px;font-size:13px;background:var(--bg);color:var(--fg);border:1px solid var(--bd)}
+button.chip:hover{border-color:var(--acc)}button:disabled{opacity:.5;cursor:wait}
+</style>
+</head>
+<body>
+<header><h1>PDF Local</h1><p>Todo se procesa en este equipo. Nada sale a internet.</p></header>
+<div class="grid" id="grid"></div>
+<div id="panel"><div class="box">
+  <button class="sec" id="back">← Volver</button>
+  <h2 id="title"></h2>
+  <div id="drop">Arrastra archivos aquí o haz clic<input type="file" id="file" hidden multiple></div>
+  <ul id="list"></ul>
+  <div id="hint"></div>
+  <div id="actions"></div>
+  <div id="pages" class="pages"></div>
+  <form id="opts"></form>
+  <button id="go">Procesar</button>
+  <div id="msg"></div>
+</div></div>
+<script src="app.js"></script>
+</body>
+</html>

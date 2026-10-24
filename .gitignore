@@ -1,0 +1,23 @@
+# --- Generado por install_vendor (scripts/install_vendor.py) ---
+# Entorno virtual de Python con las librerías de requirements.txt
+.venv/
+# Tesseract, Ghostscript y LibreOffice instalados en Windows
+vendor/
+
+# --- Caché de Python ---
+__pycache__/
+*.py[cod]
+
+# --- Caché de pruebas y herramientas ---
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# --- Archivos del sistema operativo y editores ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
