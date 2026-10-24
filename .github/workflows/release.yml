@@ -1,4 +1,4 @@
-name: Release
+﻿name: Release
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
       - name: Dependencias Python
         run: pip install -r requirements.txt pyinstaller
 
-      - name: Caché de vendor
+      - name: CachÃ© de vendor
         uses: actions/cache@v4
         with:
           path: vendor
@@ -36,9 +36,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
-      - name: Versión desde el tag
+      - name: VersiÃ³n desde el tag
         if: startsWith(github.ref, 'refs/tags/v')
         working-directory: electron
         shell: bash

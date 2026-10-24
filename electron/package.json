@@ -1,7 +1,7 @@
 {
   "name": "pdf-local",
   "productName": "PDF Local",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Herramientas PDF 100% locales",
   "author": "Julio Cedeno",
   "license": "UNLICENSED",
@@ -13,8 +13,8 @@
     "dist": "npm run build:py && npm run build:vendor && electron-builder --win portable zip"
   },
   "devDependencies": {
-    "electron": "33.2.1",
-    "electron-builder": "25.1.8",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0",
     "rcedit": "4.0.1"
   },
   "build": {
@@ -47,5 +47,8 @@
     "portable": {
       "artifactName": "PDF-Local-${version}-portable.exe"
     }
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true
   }
 }
