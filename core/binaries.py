@@ -41,6 +41,10 @@ APP_PATHS = {
 }
 
 
+# En Windows, sin esto cada programa de consola abre un CMD visible desde la app de escritorio.
+NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+
 @cache
 def find_binary(name):
     """Devuelve la ruta del programa lógico ``name`` o ``None`` si no existe.
@@ -95,9 +99,14 @@ def run_command(args, timeout, env=None):
 
     Solo se expone la última línea de la salida de error: suele contener la causa
     y evita filtrar rutas o trazas largas al usuario.
+
+    stdin va a DEVNULL: la app de escritorio arranca el servidor sin entrada estándar
+    (``stdio: "ignore"``) y heredar ese handle inválido rompe a ocrmypdf con
+    ``OSError [WinError 6/50]``.
     """
     try:
-        subprocess.run(args, check=True, timeout=timeout, env=env, capture_output=True, text=True)
+        subprocess.run(args, check=True, timeout=timeout, env=env, stdin=subprocess.DEVNULL,
+                       capture_output=True, text=True, creationflags=NO_WINDOW)
     except subprocess.TimeoutExpired:
         raise ToolError(f"El proceso tardó más de {timeout} s") from None
     except subprocess.CalledProcessError as error:

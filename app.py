@@ -108,8 +108,50 @@ def too_large(_error):
 def _run_frozen_module():
     """Congelado, ``sys.executable`` es este exe: emula ``python -m ocrmypdf`` (tools/external.py)."""
     if getattr(sys, "frozen", False) and sys.argv[1:3] == ["-m", "ocrmypdf"]:
+        _pin_std_handles()
+        _hide_child_consoles()
         from ocrmypdf.__main__ import run
         sys.exit(run(sys.argv[3:]))
+
+
+def _pin_std_handles():
+    """Registra copias propias de stdin/stdout/stderr como handles estándar de Windows.
+
+    En el exe congelado, algo dentro de ocrmypdf cierra a veces el fd 1/2 original
+    (al liberar un ``sys.stdout`` sustituido), y ``GetStdHandle`` sigue apuntando al
+    handle cerrado: el ``Popen`` de Ghostscript falla al azar con ``OSError
+    [WinError 6/50]``. Las copias con ``os.dup`` no las cierra nadie.
+    """
+    if sys.platform != "win32":
+        return
+    import ctypes
+    import msvcrt
+
+    set_std_handle = ctypes.windll.kernel32.SetStdHandle
+    set_std_handle.argtypes = (ctypes.c_uint32, ctypes.c_void_p)
+    for fd, std_id in ((0, 0xFFFFFFF6), (1, 0xFFFFFFF5), (2, 0xFFFFFFF4)):  # STD_INPUT/OUTPUT/ERROR_HANDLE
+        try:
+            set_std_handle(std_id, msvcrt.get_osfhandle(os.dup(fd)))
+        except OSError:
+            pass
+
+
+def _hide_child_consoles():
+    """Lanza los subprocesos de ocrmypdf (Tesseract, Ghostscript) sin ventana.
+
+    El exe congelado no tiene consola, así que cada programa de consola que abre
+    crearía la suya y se vería un CMD parpadeando.
+    """
+    if sys.platform != "win32":
+        return
+    import subprocess
+
+    popen_init = subprocess.Popen.__init__
+
+    def init_without_window(self, *args, creationflags=0, **kwargs):
+        popen_init(self, *args, creationflags=creationflags | subprocess.CREATE_NO_WINDOW, **kwargs)
+
+    subprocess.Popen.__init__ = init_without_window
 
 
 if __name__ == "__main__":
