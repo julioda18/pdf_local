@@ -10,9 +10,20 @@ Herramientas PDF al estilo iLovePDF que se ejecutan **solo en tu equipo**. Ning�
 
 ## Descargar
 
-**Windows:** descarga `PDF-Local-<versión>-portable.exe` desde [Releases](https://github.com/julioda18/pdf_local/releases/latest) y ábrelo. No necesita instalación ni Python: incluye Tesseract, Ghostscript y LibreOffice. También hay un `.zip` con la carpeta descomprimida, que arranca más rápido.
+Descarga el archivo de tu sistema desde [Releases](https://github.com/julioda18/pdf_local/releases/latest). Ninguno necesita Python.
 
-> Windows SmartScreen puede avisar porque el ejecutable no está firmado: *Más información → Ejecutar de todas formas*.
+| Sistema | Archivo | Cómo abrirlo |
+|---|---|---|
+| Windows x64 | `PDF-Local-<versión>-portable.exe` | Doble clic; no se instala |
+| Windows x64 | `PDF-Local-<versión>-x64.zip` | Descomprime y abre `PDF Local.exe` (arranca más rápido que el portable) |
+| macOS (Apple Silicon) | `PDF-Local-<versión>-mac-arm64.dmg` | Arrastra *PDF Local* a Aplicaciones |
+| macOS (Apple Silicon) | `PDF-Local-<versión>-mac-arm64.zip` | Descomprime y mueve la app a Aplicaciones |
+| Linux x64 | `PDF-Local-<versión>-linux-x86_64.AppImage` | `chmod +x` y ejecútalo |
+| Linux x64 | `PDF-Local-<versión>-linux-x64.tar.gz` | Descomprime y ejecuta `pdf-local` |
+
+En **Windows** la app incluye Tesseract, Ghostscript y LibreOffice. En **macOS y Linux** las herramientas de OCR y Office a PDF necesitan esos programas instalados en el sistema (ver [Instalación](#instalación)); sin ellos, el resto de herramientas funciona igual.
+
+> Las apps no están firmadas. **Windows**: SmartScreen → *Más información → Ejecutar de todas formas*. **macOS**: la primera vez, clic derecho en la app → *Abrir* (o `xattr -dr com.apple.quarantine "/Applications/PDF Local.app"`).
 
 ---
 
@@ -34,24 +45,26 @@ Herramientas PDF al estilo iLovePDF que se ejecutan **solo en tu equipo**. Ning�
 
 ## Herramientas
 
-| Herramienta | Qué hace | Opciones | Salida |
-|---|---|---|---|
-| Unir PDF | Concatena varios PDF en el orden subido | — | `.pdf` |
-| Dividir PDF | Separa en varios archivos | Grupos `1-3;4-6` (vacío = una página por archivo) | `.zip` |
-| Organizar páginas | Reordena y elimina páginas | Orden `3,1,2,5-8` (las omitidas se eliminan) | `.pdf` |
-| Rotar PDF | Gira en sentido horario | Ángulo 90/180/270, páginas (vacío = todas) | `.pdf` |
-| Comprimir PDF | Reduce imágenes, fuentes y objetos sobrantes | Nivel baja/media/alta | `.pdf` |
-| PDF a imagen | Una imagen por página | JPG/PNG, 72/150/300 DPI | `.zip` |
-| Imagen a PDF | Una página por imagen | — | `.pdf` |
-| PDF a Word | Reconstruye texto, tablas e imágenes editables | — | `.docx` |
-| PDF a Excel | Una hoja por tabla detectada (o por página con su texto) | — | `.xlsx` |
-| PDF a PowerPoint | Una diapositiva por página; el texto va en las notas | — | `.pptx` |
-| Proteger PDF | Cifrado AES-256 | Contraseña | `.pdf` |
-| Desbloquear PDF | Quita la contraseña | Contraseña actual | `.pdf` |
-| Marca de agua | Texto diagonal semitransparente | Texto, opacidad 0–1 | `.pdf` |
-| Numerar páginas | Número centrado al pie | Formato con `{n}` y `{total}` | `.pdf` |
-| OCR | Hace buscable un PDF escaneado | Idioma spa/eng/spa+eng | `.pdf` |
-| Office a PDF | Word, Excel, PowerPoint, ODT/ODS/ODP, RTF, TXT | — | `.pdf` |
+| Herramienta | Qué hace | Opciones | Salida | Librería / programa |
+|---|---|---|---|---|
+| Unir PDF | Concatena varios PDF en el orden subido | — | `.pdf` | PyMuPDF (`insert_pdf`) |
+| Dividir PDF | Separa en varios archivos | Grupos `1-3;4-6` (vacío = una página por archivo) | `.zip` | PyMuPDF + `zipfile` |
+| Organizar páginas | Reordena y elimina páginas | Orden `3,1,2,5-8` (las omitidas se eliminan) | `.pdf` | PyMuPDF |
+| Rotar PDF | Gira en sentido horario | Ángulo 90/180/270, páginas (vacío = todas) | `.pdf` | PyMuPDF |
+| Comprimir PDF | Reduce imágenes, fuentes y objetos sobrantes | Nivel baja/media/alta | `.pdf` | PyMuPDF (`rewrite_images`, `subset_fonts`, `garbage=4`) |
+| PDF a imagen | Una imagen por página | JPG/PNG, 72/150/300 DPI | `.zip` | PyMuPDF (`get_pixmap`) |
+| Imagen a PDF | Una página por imagen | — | `.pdf` | PyMuPDF (`convert_to_pdf`) |
+| PDF a Word | Reconstruye texto, tablas e imágenes editables | — | `.docx` | pdf2docx (usa PyMuPDF y python-docx) |
+| PDF a Excel | Una hoja por tabla detectada (o por página con su texto) | — | `.xlsx` | PyMuPDF (`find_tables`) + openpyxl |
+| PDF a PowerPoint | Una diapositiva por página; el texto va en las notas | — | `.pptx` | PyMuPDF (render) + python-pptx |
+| Proteger PDF | Cifrado AES-256 | Contraseña | `.pdf` | pikepdf (qpdf) |
+| Desbloquear PDF | Quita la contraseña | Contraseña actual | `.pdf` | pikepdf (qpdf) |
+| Marca de agua | Texto diagonal semitransparente | Texto, opacidad 0–1 | `.pdf` | PyMuPDF (`insert_text`) |
+| Numerar páginas | Número centrado al pie | Formato con `{n}` y `{total}` | `.pdf` | PyMuPDF (`insert_textbox`) |
+| OCR | Hace buscable un PDF escaneado | Idioma spa/eng/spa+eng | `.pdf` | ocrmypdf → Tesseract + Ghostscript |
+| Office a PDF | Word, Excel, PowerPoint, ODT/ODS/ODP, RTF, TXT | — | `.pdf` | LibreOffice (`soffice --headless`) |
+
+Las miniaturas de la vista de páginas también se generan con PyMuPDF. El servidor es Flask (Werkzeug sanea los nombres de archivo) y la app de escritorio usa Electron + PyInstaller.
 
 Formato de rangos: páginas empezando en 1, separadas por coma; `a-b` es un intervalo. En *Dividir* cada grupo separado por `;` produce un archivo.
 
@@ -62,7 +75,7 @@ Formato de rangos: páginas empezando en 1, separadas por coma; `a-b` es un inte
 | Componente | Para qué | Windows | macOS | Linux |
 |---|---|---|---|---|
 | Python 3.11+ | Servidor y herramientas | sistema | sistema | sistema |
-| Flask, PyMuPDF, pikepdf, ocrmypdf | Librerías | `.venv\` | `.venv/` | `.venv/` |
+| Flask, PyMuPDF, pikepdf, ocrmypdf, pdf2docx, openpyxl, python-pptx | Librerías (`requirements.txt`) | `.venv\` | `.venv/` | `.venv/` |
 | Tesseract OCR (+ `spa`) | OCR | `vendor\Tesseract-OCR\` | Homebrew | paquete del sistema |
 | Ghostscript | OCR (lo usa ocrmypdf) | `vendor\gs\` | Homebrew | paquete del sistema |
 | LibreOffice | Office a PDF | `vendor\LibreOffice\` | `/Applications` (cask) | paquete del sistema |
@@ -117,10 +130,12 @@ Para detener el servidor, pulsa `Ctrl+C` o cierra la consola.
 La app de escritorio es la misma interfaz dentro de una ventana de Electron. Electron arranca el servidor Flask, congelado con PyInstaller, en un puerto libre de `127.0.0.1` y lo cierra al salir.
 
 ```
-PDF Local.exe (Electron, electron/main.js)
- ├─ resources/backend/pdf_local_server.exe   app.py congelado (backend.spec)
- └─ resources/vendor/                         Tesseract, Ghostscript, LibreOffice podados
+PDF Local (Electron, electron/main.js)
+ ├─ resources/backend/pdf_local_server[.exe]  app.py congelado (backend.spec)
+ └─ resources/vendor/                         Solo Windows: Tesseract, Ghostscript, LibreOffice podados
 ```
+
+En macOS y Linux no hay `vendor/`: `core/binaries.py` encuentra los programas del sistema por el PATH y, en macOS, también en las rutas de Homebrew (`/opt/homebrew/bin`, `/usr/local/bin`), porque una app abierta desde el Finder no hereda el PATH del shell.
 
 | Variable | La define | Uso |
 |---|---|---|
@@ -129,23 +144,28 @@ PDF Local.exe (Electron, electron/main.js)
 
 ### Compilar desde el código
 
-Requisitos: Windows, Python 3.12 y Node 20.
+Requisitos: Python 3.12 y Node 22.12 o superior (Electron 45 no funciona con Node 20). Cada sistema compila su propia versión: PyInstaller no hace compilación cruzada.
 
 ```powershell
-python scripts/install_vendor.py          # vendor/ + .venv
-.venv\Scripts\activate
-pip install pyinstaller
+python scripts/install_vendor.py          # .venv (+ vendor/ en Windows); incluye pyinstaller
+.venv\Scripts\activate                    # macOS/Linux: source .venv/bin/activate
 cd electron
 npm ci
 npm start                                 # desarrollo: usa .venv y app.py
-npm run dist                              # genera electron/dist/
+npm run dist                              # Windows → electron/dist/
+npm run dist:mac                          # macOS
+npm run dist:linux                        # Linux
 ```
 
-`npm run dist` ejecuta tres pasos:
+| Script | Pasos | Genera |
+|---|---|---|
+| `npm run dist` | `build:py` + `build:vendor` + electron-builder | `PDF-Local-<versión>-portable.exe`, `PDF-Local-<versión>-x64.zip` |
+| `npm run dist:mac` | `build:py` + electron-builder | `PDF-Local-<versión>-mac-arm64.dmg` y `.zip` |
+| `npm run dist:linux` | `build:py` + electron-builder | `PDF-Local-<versión>-linux-x86_64.AppImage`, `PDF-Local-<versión>-linux-x64.tar.gz` |
 
 1. `build:py`: PyInstaller congela `app.py` en `electron/build/backend/`.
-2. `build:vendor`: [prune-vendor.ps1](electron/prune-vendor.ps1) copia `vendor/` a `electron/build/vendor/` sin documentación, galerías, plantillas, diccionarios ni `.jar`.
-3. `electron-builder` crea `PDF-Local-<versión>-portable.exe` y `PDF-Local-<versión>-x64.zip`. El hook [after-pack.js](electron/after-pack.js) incrusta el icono y la versión con rcedit.
+2. `build:vendor` (solo Windows): [prune-vendor.ps1](electron/prune-vendor.ps1) copia `vendor/` a `electron/build/vendor/` sin documentación, galerías, plantillas, diccionarios ni `.jar`.
+3. `electron-builder` empaqueta. En Windows, el hook [after-pack.js](electron/after-pack.js) incrusta el icono y la versión con rcedit.
 
 El icono se regenera con `python scripts/make_icon.py` y se guarda en `electron/resources/`.
 
@@ -156,7 +176,7 @@ git tag v1.1.0
 git push origin v1.1.0
 ```
 
-[release.yml](.github/workflows/release.yml) instala `vendor/`, ejecuta los tests, compila con la versión del tag y adjunta el `.exe` y el `.zip` al Release. [ci.yml](.github/workflows/ci.yml) ejecuta los tests en cada push y PR a `main`.
+[release.yml](.github/workflows/release.yml) compila en paralelo en Windows, macOS y Linux con la versión del tag y adjunta los seis archivos al Release. En Windows además instala `vendor/` y ejecuta los tests. Para subir a mano un build local: `gh release upload v1.1.0 electron/dist/PDF-Local-1.1.0-portable.exe electron/dist/PDF-Local-1.1.0-x64.zip --clobber`. [ci.yml](.github/workflows/ci.yml) ejecuta los tests en cada push y PR a `main`.
 
 ---
 
